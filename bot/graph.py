@@ -23,7 +23,6 @@ Session memory (Requirements 6.1, 6.3):
 from __future__ import annotations
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
 
 from bot.state import AgentState
 from bot.nodes import (
@@ -62,25 +61,11 @@ def build_graph(checkpointer=None):
     """
     Construct and compile the LangGraph StateGraph.
 
-    Parameters
-    ----------
-    checkpointer:
-        A LangGraph checkpointer instance.  Defaults to a fresh MemorySaver
-        so that session history is retained across turns within a thread.
-        Pass ``None`` explicitly only in tests that do not need persistence.
-
-    Returns a compiled graph ready for invocation.  To use session memory,
-    pass a config dict with a thread_id:
-
-        graph.invoke(state, config={"configurable": {"thread_id": "abc123"}})
-
-    Each unique thread_id gets its own isolated conversation history
-    (Requirements 6.1, 6.3).  Starting a new session means using a new
-    thread_id — prior history is never carried across sessions (Requirement 6.3).
+    checkpointer is intentionally None by default. The Streamlit frontend
+    manages conversation history explicitly via the `messages` field in state,
+    so MemorySaver is not needed and causes serialization errors with custom
+    dataclasses (WeatherData, SOP) on Python 3.14 / newer langgraph versions.
     """
-    if checkpointer is None:
-        checkpointer = MemorySaver()
-
     builder = StateGraph(AgentState)
 
     # Register nodes
@@ -114,7 +99,7 @@ def build_graph(checkpointer=None):
     builder.add_edge("generate_response", END)
     builder.add_edge("handle_failure", END)
 
-    return builder.compile(checkpointer=checkpointer)
+    return builder.compile()
 
 
 # ---------------------------------------------------------------------------

@@ -69,7 +69,7 @@ if user_input:
                 else:
                     lc_messages.append(AIMessage(content=m["content"]))
 
-            config = {"configurable": {"thread_id": st.session_state.thread_id}}
+            config = {}
             result = graph.invoke(
                 {"user_input": user_input, "messages": lc_messages},
                 config=config,
