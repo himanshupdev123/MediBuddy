@@ -30,11 +30,15 @@ from bot.sop_engine import Intent
 # ---------------------------------------------------------------------------
 
 def _get_llm() -> ChatOpenAI:
-    return ChatOpenAI(
-        model=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+    kwargs: dict = dict(
+        model=os.getenv("LLM_MODEL", "moonshotai/kimi-k2-instruct"),
         temperature=0,
         api_key=os.getenv("LLM_API_KEY"),
     )
+    base_url = os.getenv("LLM_BASE_URL")
+    if base_url:
+        kwargs["base_url"] = base_url
+    return ChatOpenAI(**kwargs)
 
 
 # ---------------------------------------------------------------------------
