@@ -75,23 +75,38 @@ def parse_intent(state: AgentState) -> AgentState:
     user_input = state.get("user_input", "")
     messages = state.get("messages", [])
 
-    llm = _get_llm()
-
     # Build message list: system prompt + conversation history + current input
     prompt_messages = [SystemMessage(content=_PARSE_SYSTEM_PROMPT)]
-    # Include recent history so the LLM can resolve references like "what about evening?"
-    for msg in messages[-6:]:  # last 3 turns (human + assistant pairs)
+    for msg in messages[-6:]:
         prompt_messages.append(msg)
     prompt_messages.append(HumanMessage(content=user_input))
 
+    llm_error = None
+    extracted = {}
     try:
+        llm = _get_llm()
         response = llm.invoke(prompt_messages)
-        extracted = json.loads(response.content)
-    except Exception:
+        # Strip markdown fences if the model wraps the JSON anyway
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[-2] if "```" in content else content
+            content = content.lstrip("json").strip()
+        extracted = json.loads(content)
+    except Exception as exc:
+        llm_error = str(exc)
         extracted = {}
 
     # Carry forward prior context; update only what changed
     location = extracted.get("location") or state.get("location")
+
+    # Last-resort fallback: if LLM failed or returned null location, scan the
+    # raw input for known location patterns (capitalised words, "in <City>", etc.)
+    if not location and llm_error:
+        import re as _re
+        # Match "in <City>" or "at <City>" pattern
+        m = _re.search(r'\b(?:in|at|for|near)\s+([A-Z][a-zA-Z\s]{1,30}?)(?:\s+today|\s+now|\s*\?|$)', user_input)
+        if m:
+            location = m.group(1).strip()
     activity = extracted.get("activity") or state.get("activity")
     timeframe = extracted.get("timeframe") or state.get("timeframe")
 
@@ -102,6 +117,7 @@ def parse_intent(state: AgentState) -> AgentState:
             "activity": activity,
             "timeframe": timeframe,
             "failure_reason": FAILURE_NO_LOCATION,
+            "_parse_debug": llm_error or "no_error",
         }
 
     return {
@@ -244,6 +260,11 @@ def generate_response(state: AgentState) -> AgentState:
 # ---------------------------------------------------------------------------
 
 # Hard-coded failure messages — LLM is never invoked here (Requirement 8.1–8.4)
+_DEFAULT_FAILURE_MESSAGE = (
+    "Something went wrong and I'm unable to provide an advisory right now. "
+    "Please try again."
+)
+
 _FAILURE_MESSAGES: dict[str, str] = {
     FAILURE_NO_LOCATION: (
         "I need a location to check the weather. "
@@ -267,11 +288,6 @@ _FAILURE_MESSAGES: dict[str, str] = {
     ),
 }
 
-_DEFAULT_FAILURE_MESSAGE = (
-    "Something went wrong and I'm unable to provide an advisory right now. "
-    "Please try again."
-)
-
 
 def handle_failure(state: AgentState) -> AgentState:
     """
@@ -280,4 +296,8 @@ def handle_failure(state: AgentState) -> AgentState:
     """
     reason = state.get("failure_reason") or ""
     message = _FAILURE_MESSAGES.get(reason, _DEFAULT_FAILURE_MESSAGE)
+    # Surface LLM errors (e.g. bad API key) so they're visible in the UI
+    debug = state.get("_parse_debug", "")
+    if debug and debug != "no_error" and reason == FAILURE_NO_LOCATION:
+        message += f"\n\n_(Debug: {debug[:300]})_"
     return {**state, "response": message}
