@@ -1,0 +1,205 @@
+# Standard Operating Procedures (SOPs) for Weather Advisory Bot
+#
+# Conflict resolution strategy (documented per Requirement 3.7):
+#   1. Highest severity wins: CRITICAL > HIGH > MODERATE > LOW
+#   2. Tie-break: SOP with activities list that is more specific to the user's stated activity wins
+#   3. Second tie-break: lower SOP id wins (stable, deterministic)
+#
+# Condition keys supported by the SOP engine:
+#   uv_index_gte              - UV index >= threshold
+#   uv_index_lt               - UV index < threshold
+#   precip_prob_gte           - precipitation_probability >= threshold (%)
+#   wind_speed_gt             - wind_speed > threshold (km/h)
+#   wind_speed_lt             - wind_speed < threshold (km/h)
+#   weather_code_in           - weather_code in listed WMO code groups
+#   temperature_gte           - temperature >= threshold (°C)
+#   temperature_lt            - temperature < threshold (°C)
+#   temperature_range         - temperature within [min, max] (°C)
+#   precip_prob_lt            - precipitation_probability < threshold (%)
+#   fuzzy_composite           - all sub-conditions must be satisfied (comfort scoring)
+#   activities_include        - any of the listed keywords must appear in user activity
+
+# ---------------------------------------------------------------------------
+# Category: outdoor_exercise
+# ---------------------------------------------------------------------------
+
+# SOP-001: UV is the primary hazard; activity filter ensures advice targets exercisers.
+- id: "SOP-001"
+  title: "High UV Midday Exercise"
+  category: "outdoor_exercise"
+  severity: "HIGH"
+  description: >
+    If UV index >= 8, advise against unprotected outdoor exercise and recommend
+    sunscreen plus rescheduling to cooler parts of the day.
+  conditions:
+    uv_index_gte: 8
+  activities: ["exercise", "cycling", "running", "hiking", "walking", "jogging", "outdoor"]
+  response_template: >
+    UV index is currently {uv_index}, which is in the very high range.
+    We advise against unprotected outdoor {activity} during peak sun hours.
+    Consider rescheduling to early morning or evening, and use SPF 50+
+    sunscreen if you must go out. (SOP-001)
+
+# SOP-002: Rain + cycling is a specific high-risk combination warranting its own SOP.
+- id: "SOP-002"
+  title: "Heavy Rain Cycling/Two-Wheeler"
+  category: "outdoor_exercise"
+  severity: "HIGH"
+  description: >
+    If precipitation probability >= 70% and the user is cycling, advise postponing
+    due to road hazard and reduced visibility.
+  conditions:
+    precip_prob_gte: 70
+  activities: ["cycling", "biking", "bicycle", "two-wheeler", "motorbike"]
+  response_template: >
+    Precipitation probability is {precipitation_probability}% — roads may be wet and
+    visibility reduced. We advise postponing your {activity} until conditions improve.
+    If you must go out, wear high-visibility gear and reduce speed. (SOP-002)
+
+# SOP-003: High winds create a distinct danger for cyclists independent of rain.
+- id: "SOP-003"
+  title: "Dangerous Wind for Cyclists"
+  category: "outdoor_exercise"
+  severity: "HIGH"
+  description: >
+    If wind speed > 40 km/h and the user is cycling, advise against cycling due to
+    instability risk.
+  conditions:
+    wind_speed_gt: 40
+  activities: ["cycling", "biking", "bicycle", "two-wheeler"]
+  response_template: >
+    Wind speed is currently {wind_speed} km/h, which poses a serious instability risk
+    for cyclists. We advise against {activity} in these conditions. Consider indoor
+    alternatives or wait for winds to subside below 40 km/h. (SOP-003)
+
+# SOP-004: Thunderstorm or heavy sustained rain is the most critical outdoor hazard.
+- id: "SOP-004"
+  title: "Storm or Systemic Heavy Rain — All Outdoors"
+  category: "outdoor_exercise"
+  severity: "CRITICAL"
+  description: >
+    If weather_code indicates thunderstorm or heavy rain AND precipitation >= 15 mm,
+    advise all outdoor activities to cease immediately.
+  conditions:
+    weather_code_in: [95, 96, 99, 65, 67, 82]   # thunderstorm + heavy/violent rain WMO codes
+    precipitation_gte: 15
+  activities: []   # applies to all activities
+  response_template: >
+    Current conditions show {weather_code_label} with {precipitation} mm of precipitation.
+    This is a CRITICAL weather advisory: all outdoor activities should be suspended
+    immediately. Seek shelter indoors. (SOP-004)
+
+# ---------------------------------------------------------------------------
+# Category: travel
+# ---------------------------------------------------------------------------
+
+# SOP-005: High rain probability disrupts road and transit travel broadly.
+- id: "SOP-005"
+  title: "Rain Travel Delays"
+  category: "travel"
+  severity: "MODERATE"
+  description: >
+    If precipitation probability >= 70% and the user is travelling, advise allowing
+    extra time and checking transport updates.
+  conditions:
+    precip_prob_gte: 70
+  activities: ["travel", "travelling", "traveling", "commute", "commuting", "driving", "road trip"]
+  response_template: >
+    Precipitation probability is {precipitation_probability}% — expect potential delays
+    on roads and public transport. Allow extra travel time, check live transport updates,
+    and ensure wipers and lights are working. (SOP-005)
+
+# SOP-006: Fog and mist reduce visibility to dangerous levels for drivers and cyclists.
+- id: "SOP-006"
+  title: "Low Visibility / Fog Travel"
+  category: "travel"
+  severity: "MODERATE"
+  description: >
+    If weather_code indicates fog or mist, advise reduced speed, use of fog lights,
+    and increased following distance.
+  conditions:
+    weather_code_in: [45, 48]   # WMO fog / depositing rime fog codes
+  activities: ["travel", "travelling", "traveling", "commute", "commuting", "driving", "cycling"]
+  response_template: >
+    Current conditions include fog or mist (weather code {weather_code}).
+    Reduce speed, switch on fog lights, and increase following distance.
+    Avoid travel if visibility is severely reduced. (SOP-006)
+
+# ---------------------------------------------------------------------------
+# Category: vulnerable_groups
+# ---------------------------------------------------------------------------
+
+# SOP-007: Extreme heat is especially dangerous for elderly individuals and young children.
+- id: "SOP-007"
+  title: "Extreme Heat for Elderly/Children"
+  category: "vulnerable_groups"
+  severity: "HIGH"
+  description: >
+    If temperature >= 38°C, issue a strong advisory for elderly people and young
+    children to stay indoors and stay hydrated.
+  conditions:
+    temperature_gte: 38
+  activities: ["elderly", "children", "kids", "seniors", "vulnerable", "baby", "infant", "toddler"]
+  response_template: >
+    Temperature is {temperature}°C — extreme heat conditions.
+    Elderly individuals and young children should remain indoors in a cool environment,
+    drink water regularly, and avoid all outdoor exertion. (SOP-007)
+
+# SOP-008: UV exposure is harmful to children and pets even below the SOP-001 exercise threshold.
+- id: "SOP-008"
+  title: "High UV for Children/Pets"
+  category: "vulnerable_groups"
+  severity: "MODERATE"
+  description: >
+    If UV index >= 6 and activity mentions children or pets, advise protective
+    measures including sunscreen and shade.
+  conditions:
+    uv_index_gte: 6
+  activities: ["children", "kids", "child", "baby", "toddler", "pet", "pets", "dog", "walking dog"]
+  response_template: >
+    UV index is {uv_index}. Children and pets are particularly sensitive to UV exposure.
+    Apply sunscreen, seek shade between 11am and 3pm, and keep sessions short.
+    Ensure pets have access to water and cool ground. (SOP-008)
+
+# ---------------------------------------------------------------------------
+# Category: leisure
+# ---------------------------------------------------------------------------
+
+# SOP-009: Fuzzy composite "all-green" SOP — fires only when all comfort dimensions are met.
+- id: "SOP-009"
+  title: "Comfortable Picnic Day"
+  category: "leisure"
+  severity: "LOW"
+  description: >
+    A holistic comfort check for leisure outings. Fires when temperature, rain
+    probability, wind, and UV are all within pleasant ranges simultaneously.
+    No single threshold dominates — all four dimensions must be within range.
+  conditions:
+    fuzzy_composite:
+      temperature_range: [20, 30]
+      precip_prob_lt: 30
+      wind_speed_lt: 20
+      uv_index_lt: 6
+  activities: ["picnic", "park", "leisure", "outdoor", "relaxing", "bbq", "barbecue", "garden"]
+  response_template: >
+    Great news — conditions look comfortable for a {activity}!
+    Temperature is {temperature}°C, wind is light at {wind_speed} km/h,
+    rain probability is only {precipitation_probability}%, and UV is {uv_index}.
+    Enjoy your time outside. (SOP-009)
+
+# SOP-010: Marginal conditions warrant advisory without prohibition.
+- id: "SOP-010"
+  title: "Marginal Outdoor Day"
+  category: "leisure"
+  severity: "LOW"
+  description: >
+    Temperature is within a tolerable range and rain is unlikely but not ideal.
+    Advise users to be prepared without cancelling plans.
+  conditions:
+    temperature_range: [15, 35]
+    precip_prob_lt: 50
+  activities: ["picnic", "park", "leisure", "outdoor", "relaxing", "bbq", "barbecue", "garden", "walking"]
+  response_template: >
+    Conditions are marginal but workable for {activity}.
+    Temperature is {temperature}°C with a {precipitation_probability}% chance of rain.
+    Bring a light layer and consider a backup plan in case of showers. (SOP-010)
