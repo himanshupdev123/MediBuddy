@@ -59,8 +59,21 @@ if user_input:
     # Invoke the LangGraph agent with a loading spinner
     with st.chat_message("assistant"):
         with st.spinner("Checking weather and policies…"):
+            from langchain_core.messages import HumanMessage, AIMessage
+            # Build LangChain message history from session so parse_intent
+            # can carry forward location/activity across turns
+            lc_messages = []
+            for m in st.session_state.messages[:-1]:  # exclude the just-appended user msg
+                if m["role"] == "user":
+                    lc_messages.append(HumanMessage(content=m["content"]))
+                else:
+                    lc_messages.append(AIMessage(content=m["content"]))
+
             config = {"configurable": {"thread_id": st.session_state.thread_id}}
-            result = graph.invoke({"user_input": user_input}, config=config)
+            result = graph.invoke(
+                {"user_input": user_input, "messages": lc_messages},
+                config=config,
+            )
             bot_response = result.get("response", "Sorry, something went wrong.")
 
         st.write(bot_response)

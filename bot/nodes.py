@@ -58,6 +58,7 @@ Extract the following fields from the user's message. Return ONLY valid JSON wit
   "timeframe" : string or null — when (e.g. "now", "this morning", "tomorrow", "evening")
 
 Rules:
+- If the user's message is just a city or place name (e.g. "bangalore", "London"), treat it as the location.
 - If a field is not mentioned, return null for that field.
 - Do not add any extra keys.
 - Do not include markdown fences or any text outside the JSON object.
