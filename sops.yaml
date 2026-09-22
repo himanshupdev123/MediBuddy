@@ -205,22 +205,30 @@
     rain probability is only {precipitation_probability}%, and UV is {uv_index}.
     Enjoy your time outside. (SOP-009)
 
-# SOP-010: Marginal conditions warrant advisory without prohibition.
+# SOP-010: Catch-all for any outdoor activity under reasonable conditions.
 - id: "SOP-010"
-  title: "Marginal Outdoor Day"
+  title: "General Outdoor Advisory — Conditions Acceptable"
   category: "leisure"
   severity: "LOW"
   description: >
-    Temperature is within a tolerable range and rain is unlikely but not ideal.
-    Advise users to be prepared without cancelling plans.
+    Temperature is within a tolerable range and rain is unlikely.
+    Applies to any outdoor activity when no higher-severity SOP matches.
+    Acts as the default "conditions are fine" response.
   conditions:
-    temperature_range: [15, 35]
+    temperature_range: [10, 40]
     precip_prob_lt: 50
-  activities: ["picnic", "park", "leisure", "outdoor", "relaxing", "bbq", "barbecue", "garden", "walking", "cycling", "biking", "running", "hiking", "jogging", "exercise", "bicycle"]
+  activities: ["outdoor", "outdoors", "outside", "cycling", "biking", "bike", "bicycle",
+               "running", "run", "jogging", "hiking", "hike", "walking", "walk", "stroll",
+               "picnic", "park", "leisure", "relaxing", "bbq", "barbecue", "garden",
+               "exercise", "travel", "commute", "driving", "elderly", "seniors",
+               "children", "kids", "sports", "cricket", "football", "tennis", "swimming",
+               "photography", "sightseeing", "tour", "outing", "trip", "activity"]
   response_template: >
-    Conditions are generally fine for {activity} today.
-    Temperature is {temperature}°C with a {precipitation_probability}% chance of rain and wind at {wind_speed} km/h.
-    No major weather hazards detected — enjoy your outing, but bring a light layer just in case. (SOP-010)
+    Conditions look generally acceptable for {activity} today.
+    Temperature is {temperature}°C, wind is {wind_speed} km/h, and
+    precipitation probability is {precipitation_probability}%.
+    No major weather hazards detected — enjoy your outing, but stay
+    aware of changing conditions. (SOP-010)
 
 # SOP-011: High rain probability makes outdoor leisure inadvisable.
 - id: "SOP-011"
@@ -253,3 +261,35 @@
     Temperature is {temperature}°C — warm conditions that can pose a heat stress
     risk for elderly individuals. Stay hydrated, avoid direct sun between 11am and 4pm,
     wear light clothing, and take frequent breaks in the shade. (SOP-012)
+
+# SOP-013: High rain probability catch-all — any activity, any location.
+- id: "SOP-013"
+  title: "High Rain Probability — General Outdoor Caution"
+  category: "outdoor_exercise"
+  severity: "MODERATE"
+  description: >
+    Precipitation probability >= 50% for any outdoor activity not covered by a
+    more specific SOP. Acts as the general rainy-day fallback.
+  conditions:
+    precip_prob_gte: 50
+  activities: []
+  response_template: >
+    Precipitation probability is {precipitation_probability}% in your area — rain
+    is likely during your {activity}. Bring waterproof gear, check for any weather
+    alerts, and have a backup plan ready. (SOP-013)
+
+# SOP-014: Very high temperature catch-all for any outdoor activity.
+- id: "SOP-014"
+  title: "High Temperature — General Outdoor Caution"
+  category: "outdoor_exercise"
+  severity: "MODERATE"
+  description: >
+    Temperature above 35°C for any outdoor activity not covered by a more specific SOP.
+    Acts as the general hot-weather fallback.
+  conditions:
+    temperature_gte: 35
+  activities: []
+  response_template: >
+    Temperature is {temperature}°C — hot conditions for any outdoor activity.
+    Stay hydrated, avoid peak sun hours (11am–4pm), wear light clothing, and
+    take regular breaks in the shade. (SOP-014)
