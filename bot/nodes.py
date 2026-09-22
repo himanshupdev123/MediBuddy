@@ -116,15 +116,16 @@ def parse_intent(state: AgentState) -> AgentState:
 
     # If activity is still None, try to infer from the query directly
     if not activity:
-        import re as _re
         activity_keywords = [
-            ("cycling", ["cycling", "cycle", "biking", "bike", "bicycle"]),
+            ("cycling", ["cycling", "cycle", "biking", "bike", "bicycle", "two-wheeler"]),
             ("running", ["running", "run", "jogging", "jog"]),
             ("hiking", ["hiking", "hike", "trekking", "trek"]),
             ("walking", ["walking", "walk", "stroll"]),
             ("picnic", ["picnic"]),
             ("travel", ["travel", "travelling", "traveling", "commute", "driving", "drive"]),
-            ("outdoor", ["outdoor", "outdoors", "outside"]),
+            ("elderly", ["elderly", "senior", "seniors", "old people", "aged", "grandparent"]),
+            ("children", ["children", "child", "kids", "kid", "baby", "toddler"]),
+            ("outdoor", ["outdoor", "outdoors", "outside", "go out", "heading out", "head out"]),
         ]
         q = user_input.lower()
         for canonical, variants in activity_keywords:

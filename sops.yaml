@@ -50,7 +50,7 @@
     due to road hazard and reduced visibility.
   conditions:
     precip_prob_gte: 70
-  activities: ["cycling", "biking", "bicycle", "two-wheeler", "motorbike"]
+  activities: ["cycling", "biking", "bicycle", "two-wheeler", "motorbike", "bike"]
   response_template: >
     Precipitation probability is {precipitation_probability}% — roads may be wet and
     visibility reduced. We advise postponing your {activity} until conditions improve.
@@ -157,7 +157,7 @@
     children to stay indoors and stay hydrated.
   conditions:
     temperature_gte: 38
-  activities: ["elderly", "children", "kids", "seniors", "vulnerable", "baby", "infant", "toddler"]
+  activities: ["elderly", "children", "kids", "seniors", "vulnerable", "baby", "infant", "toddler", "outdoor", "outside", "outdoors"]
   response_template: >
     Temperature is {temperature}°C — extreme heat conditions.
     Elderly individuals and young children should remain indoors in a cool environment,
@@ -221,3 +221,35 @@
     Conditions are generally fine for {activity} today.
     Temperature is {temperature}°C with a {precipitation_probability}% chance of rain and wind at {wind_speed} km/h.
     No major weather hazards detected — enjoy your outing, but bring a light layer just in case. (SOP-010)
+
+# SOP-011: High rain probability makes outdoor leisure inadvisable.
+- id: "SOP-011"
+  title: "Rain Risk for Outdoor Leisure"
+  category: "leisure"
+  severity: "MODERATE"
+  description: >
+    If precipitation probability >= 50% and the activity is leisure/picnic,
+    advise against outdoor plans or recommend a covered venue as backup.
+  conditions:
+    precip_prob_gte: 50
+  activities: ["picnic", "park", "leisure", "outdoor", "outdoors", "relaxing", "bbq", "barbecue", "garden"]
+  response_template: >
+    Precipitation probability is {precipitation_probability}% — there is a significant
+    chance of rain during your {activity}. We recommend choosing a covered venue or
+    rescheduling. If you do head out, bring an umbrella and have a backup plan ready. (SOP-011)
+
+# SOP-012: Warm weather advisory for elderly going outdoors (below extreme heat threshold).
+- id: "SOP-012"
+  title: "Warm Weather Caution for Elderly"
+  category: "vulnerable_groups"
+  severity: "MODERATE"
+  description: >
+    Temperature between 30°C and 38°C — warm enough to pose dehydration and heat
+    stress risk for elderly individuals, even without extreme heat.
+  conditions:
+    temperature_range: [30, 38]
+  activities: ["elderly", "seniors", "outdoor", "outside", "outdoors", "walk", "walking"]
+  response_template: >
+    Temperature is {temperature}°C — warm conditions that can pose a heat stress
+    risk for elderly individuals. Stay hydrated, avoid direct sun between 11am and 4pm,
+    wear light clothing, and take frequent breaks in the shade. (SOP-012)
