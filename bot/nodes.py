@@ -31,7 +31,7 @@ from bot.sop_engine import Intent
 
 def _get_llm() -> ChatOpenAI:
     kwargs: dict = dict(
-        model=os.getenv("LLM_MODEL", "moonshotai/kimi-k2-instruct"),
+        model=os.getenv("LLM_MODEL", "openai/gpt-oss-120b"),
         temperature=0,
         api_key=os.getenv("LLM_API_KEY"),
     )
@@ -118,14 +118,18 @@ def parse_intent(state: AgentState) -> AgentState:
     if not activity:
         import re as _re
         activity_keywords = [
-            "cycling", "cycle", "biking", "bike", "running", "run",
-            "hiking", "hike", "walking", "walk", "jogging", "jog",
-            "picnic", "travel", "driving", "drive", "outdoor", "outdoors",
+            ("cycling", ["cycling", "cycle", "biking", "bike", "bicycle"]),
+            ("running", ["running", "run", "jogging", "jog"]),
+            ("hiking", ["hiking", "hike", "trekking", "trek"]),
+            ("walking", ["walking", "walk", "stroll"]),
+            ("picnic", ["picnic"]),
+            ("travel", ["travel", "travelling", "traveling", "commute", "driving", "drive"]),
+            ("outdoor", ["outdoor", "outdoors", "outside"]),
         ]
         q = user_input.lower()
-        for kw in activity_keywords:
-            if kw in q:
-                activity = kw
+        for canonical, variants in activity_keywords:
+            if any(v in q for v in variants):
+                activity = canonical
                 break
     if not location:
         return {
