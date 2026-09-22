@@ -56,6 +56,24 @@
     visibility reduced. We advise postponing your {activity} until conditions improve.
     If you must go out, wear high-visibility gear and reduce speed. (SOP-002)
 
+# SOP-002B: Moderate rain probability for cyclists — caution advised.
+- id: "SOP-002B"
+  title: "Moderate Rain Risk for Cyclists"
+  category: "outdoor_exercise"
+  severity: "MODERATE"
+  description: >
+    If precipitation probability is between 50% and 70% and the user is cycling,
+    advise caution — roads may become slippery and rain is likely.
+  conditions:
+    precip_prob_gte: 50
+    precip_prob_lt: 70
+  activities: ["cycling", "biking", "bicycle", "two-wheeler", "motorbike", "bike"]
+  response_template: >
+    Precipitation probability is {precipitation_probability}% — there is a moderate
+    chance of rain during your {activity}. Roads may become slippery; wear
+    waterproof gear, reduce speed on wet surfaces, and consider an alternate route
+    if heavy showers develop. (SOP-002B)
+
 # SOP-003: High winds create a distinct danger for cyclists independent of rain.
 - id: "SOP-003"
   title: "Dangerous Wind for Cyclists"
