@@ -39,3 +39,4 @@ class AgentState(TypedDict, total=False):
     # Output
     response: str
     failure_reason: Optional[str]
+    _parse_debug: Optional[str]
