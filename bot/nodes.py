@@ -100,18 +100,29 @@ def parse_intent(state: AgentState) -> AgentState:
 
     # Carry forward prior context; update only what changed
     location = extracted.get("location") or state.get("location")
-
-    # Last-resort fallback: if LLM failed or returned null location, scan the
-    # raw input for known location patterns (capitalised words, "in <City>", etc.)
-    if not location and llm_error:
-        import re as _re
-        # Match "in <City>" or "at <City>" pattern
-        m = _re.search(r'\b(?:in|at|for|near)\s+([A-Z][a-zA-Z\s]{1,30}?)(?:\s+today|\s+now|\s*\?|$)', user_input)
-        if m:
-            location = m.group(1).strip()
     activity = extracted.get("activity") or state.get("activity")
     timeframe = extracted.get("timeframe") or state.get("timeframe")
 
+    # Last-resort fallback: regex scan for "in <City>" if LLM failed
+    if not location and llm_error:
+        import re as _re
+        m = _re.search(r'\b(?:in|at|for|near)\s+([A-Z][a-zA-Z\s]{1,30}?)(?:\s+today|\s+now|\s*\?|$)', user_input)
+        if m:
+            location = m.group(1).strip()
+
+    # If activity is still None, try to infer from the query directly
+    if not activity:
+        import re as _re
+        activity_keywords = [
+            "cycling", "cycle", "biking", "bike", "running", "run",
+            "hiking", "hike", "walking", "walk", "jogging", "jog",
+            "picnic", "travel", "driving", "drive", "outdoor", "outdoors",
+        ]
+        q = user_input.lower()
+        for kw in activity_keywords:
+            if kw in q:
+                activity = kw
+                break
     if not location:
         return {
             **state,
