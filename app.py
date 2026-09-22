@@ -60,10 +60,8 @@ if user_input:
     with st.chat_message("assistant"):
         with st.spinner("Checking weather and policies…"):
             from langchain_core.messages import HumanMessage, AIMessage
-            # Build LangChain message history from session so parse_intent
-            # can carry forward location/activity across turns
             lc_messages = []
-            for m in st.session_state.messages[:-1]:  # exclude the just-appended user msg
+            for m in st.session_state.messages[:-1]:
                 if m["role"] == "user":
                     lc_messages.append(HumanMessage(content=m["content"]))
                 else:
@@ -75,6 +73,16 @@ if user_input:
                 config=config,
             )
             bot_response = result.get("response", "Sorry, something went wrong.")
+
+            # Temporary debug — remove after confirming live flow works
+            debug_info = (
+                f"📍 location=`{result.get('location')}` "
+                f"| 🏃 activity=`{result.get('activity')}` "
+                f"| ❌ failure=`{result.get('failure_reason')}` "
+                f"| 🌡️ weather=`{'yes' if result.get('weather') else 'no'}` "
+                f"| 🔍 parse_debug=`{result.get('_parse_debug', 'none')}`"
+            )
+            st.caption(debug_info)
 
         st.write(bot_response)
 
