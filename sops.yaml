@@ -198,8 +198,8 @@
   conditions:
     temperature_range: [15, 35]
     precip_prob_lt: 50
-  activities: ["picnic", "park", "leisure", "outdoor", "relaxing", "bbq", "barbecue", "garden", "walking"]
+  activities: ["picnic", "park", "leisure", "outdoor", "relaxing", "bbq", "barbecue", "garden", "walking", "cycling", "biking", "running", "hiking", "jogging", "exercise", "bicycle"]
   response_template: >
-    Conditions are marginal but workable for {activity}.
-    Temperature is {temperature}°C with a {precipitation_probability}% chance of rain.
-    Bring a light layer and consider a backup plan in case of showers. (SOP-010)
+    Conditions are generally fine for {activity} today.
+    Temperature is {temperature}°C with a {precipitation_probability}% chance of rain and wind at {wind_speed} km/h.
+    No major weather hazards detected — enjoy your outing, but bring a light layer just in case. (SOP-010)
