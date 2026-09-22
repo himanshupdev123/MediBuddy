@@ -8,11 +8,9 @@ match_sops(sops, weather, intent) -> list[SOP]
 resolve(matches)          -> tuple[SOP | None, list[SOP]]
 """
 
-from __future__ import annotations
-
 import os
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional, List, Tuple, Dict
 
 import yaml
 
@@ -21,7 +19,7 @@ from bot.weather_service import WeatherData
 # ---------------------------------------------------------------------------
 # WMO weather-code label lookup (used in response templates)
 # ---------------------------------------------------------------------------
-_WMO_LABELS: dict[int, str] = {
+_WMO_LABELS: Dict[int, str] = {
     45: "fog", 48: "rime fog",
     51: "light drizzle", 53: "moderate drizzle", 55: "dense drizzle",
     61: "slight rain", 63: "moderate rain", 65: "heavy rain",
@@ -32,7 +30,7 @@ _WMO_LABELS: dict[int, str] = {
 }
 
 # Severity order used for comparisons
-_SEVERITY_ORDER: dict[str, int] = {
+_SEVERITY_ORDER: Dict[str, int] = {
     "CRITICAL": 4,
     "HIGH": 3,
     "MODERATE": 2,
@@ -52,8 +50,8 @@ DEFAULT_SOP_PATH = os.path.join(
 class Intent:
     """Extracted intent from the user's message."""
     location: str
-    activity: str | None = None
-    timeframe: str | None = None   # "now", "morning", "evening", "today", etc.
+    activity: Optional[str] = None
+    timeframe: Optional[str] = None
 
 
 @dataclass
@@ -61,10 +59,10 @@ class SOP:
     id: str
     title: str
     category: str
-    severity: str                   # CRITICAL | HIGH | MODERATE | LOW
+    severity: str
     description: str
-    conditions: dict[str, Any]
-    activities: list[str] = field(default_factory=list)
+    conditions: Dict[str, Any]
+    activities: List[str] = field(default_factory=list)
     response_template: str = ""
 
     @property
@@ -76,15 +74,15 @@ class SOP:
 # load_sops
 # ---------------------------------------------------------------------------
 
-def load_sops(path: str = DEFAULT_SOP_PATH) -> list[SOP]:
+def load_sops(path: str = DEFAULT_SOP_PATH) -> List[SOP]:
     """
     Read SOPs from a YAML file on *every* call so that edits take effect
     without restarting the application (hot-reload, Requirement 4.2 / 4.4).
     """
     with open(path, "r", encoding="utf-8") as fh:
-        raw: list[dict] = yaml.safe_load(fh) or []
+        raw: List[Dict] = yaml.safe_load(fh) or []
 
-    sops: list[SOP] = []
+    sops: List[SOP] = []
     for item in raw:
         sops.append(SOP(
             id=str(item["id"]),
@@ -118,7 +116,7 @@ def _activity_matches(sop: SOP, intent: Intent) -> bool:
     return any(kw.lower() in activity_lower for kw in sop.activities)
 
 
-def _eval_fuzzy_composite(sub_conditions: dict[str, Any], weather: WeatherData) -> bool:
+def _eval_fuzzy_composite(sub_conditions: Dict[str, Any], weather: WeatherData) -> bool:
     """
     Fuzzy composite matching for SOP-009-style SOPs.
     All sub-conditions must be satisfied simultaneously (Requirement 3.4).
@@ -161,7 +159,7 @@ def _eval_fuzzy_composite(sub_conditions: dict[str, Any], weather: WeatherData) 
     return True
 
 
-def _eval_conditions(conditions: dict[str, Any], weather: WeatherData) -> bool:
+def _eval_conditions(conditions: Dict[str, Any], weather: WeatherData) -> bool:
     """
     Evaluate a top-level conditions dict against WeatherData.
     Multiple top-level keys are AND-ed together.
@@ -216,10 +214,10 @@ def _eval_conditions(conditions: dict[str, Any], weather: WeatherData) -> bool:
 # ---------------------------------------------------------------------------
 
 def match_sops(
-    sops: list[SOP],
+    sops: List[SOP],
     weather: WeatherData,
     intent: Intent,
-) -> list[SOP]:
+) -> List[SOP]:
     """
     Return the subset of SOPs whose conditions are satisfied for the given
     weather snapshot and user intent, sorted by severity descending.
@@ -227,7 +225,7 @@ def match_sops(
     Activity filter is applied: a SOP with a non-empty activities list only
     matches if the user's activity contains one of those keywords (Property 1).
     """
-    matched: list[SOP] = []
+    matched: List[SOP] = []
     for sop in sops:
         if not _activity_matches(sop, intent):
             continue
@@ -243,7 +241,7 @@ def match_sops(
 # resolve
 # ---------------------------------------------------------------------------
 
-def resolve(matches: list[SOP], intent: Intent | None = None) -> tuple[SOP | None, list[SOP]]:
+def resolve(matches: List[SOP], intent: Optional[Intent] = None) -> Tuple[Optional[SOP], List[SOP]]:
     """
     Apply conflict-resolution strategy and return (primary, secondaries).
 

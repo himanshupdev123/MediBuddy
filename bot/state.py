@@ -3,9 +3,7 @@ AgentState: the shared typed state passed between all LangGraph nodes.
 Requirements: 5.4
 """
 
-from __future__ import annotations
-
-from typing import Optional
+from typing import Optional, List
 from typing_extensions import TypedDict
 
 from langchain_core.messages import BaseMessage
@@ -16,7 +14,7 @@ from bot.sop_engine import SOP
 
 class AgentState(TypedDict, total=False):
     # Conversation history (full thread)
-    messages: list[BaseMessage]
+    messages: List[BaseMessage]
 
     # Current turn's raw user input
     user_input: str
@@ -32,9 +30,9 @@ class AgentState(TypedDict, total=False):
     weather: Optional[WeatherData]
 
     # SOP layer
-    matched_sops: list[SOP]
+    matched_sops: List[SOP]
     primary_sop: Optional[SOP]
-    secondary_sops: list[SOP]
+    secondary_sops: List[SOP]
 
     # Output
     response: str

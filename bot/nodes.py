@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Dict, List
+import os
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -236,7 +238,7 @@ def generate_response(state: AgentState) -> AgentState:
     """
     primary: sop_engine.SOP = state["primary_sop"]
     weather: weather_service.WeatherData = state["weather"]
-    secondaries: list[sop_engine.SOP] = state.get("secondary_sops", [])
+    secondaries: List[sop_engine.SOP] = state.get("secondary_sops", [])
 
     location = state.get("location", "")
     activity = state.get("activity")
@@ -265,7 +267,7 @@ _DEFAULT_FAILURE_MESSAGE = (
     "Please try again."
 )
 
-_FAILURE_MESSAGES: dict[str, str] = {
+_FAILURE_MESSAGES: Dict[str, str] = {
     FAILURE_NO_LOCATION: (
         "I need a location to check the weather. "
         "Which city or place are you asking about?"

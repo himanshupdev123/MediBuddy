@@ -3,10 +3,9 @@ Weather Service: geocodes city names and fetches live weather data from Open-Met
 Returns None (never raises) on any HTTP error, timeout, or empty geocoding results.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Optional, Tuple
 
 import httpx
 
@@ -37,7 +36,7 @@ class WeatherData:
     fetched_at: str             # ISO 8601 timestamp
 
 
-def geocode(city: str) -> tuple[float, float] | None:
+def geocode(city: str) -> Optional[Tuple[float, float]]:
     """
     Resolve a city name to (latitude, longitude) using Open-Meteo geocoding.
 
@@ -61,7 +60,7 @@ def geocode(city: str) -> tuple[float, float] | None:
         return None
 
 
-def fetch_weather(lat: float, lon: float) -> WeatherData | None:
+def fetch_weather(lat: float, lon: float) -> Optional[WeatherData]:
     """
     Fetch the current weather forecast for the given coordinates from Open-Meteo.
 
